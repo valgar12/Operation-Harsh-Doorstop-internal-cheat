@@ -357,6 +357,8 @@ inline void DrawCircle3D(const std::vector<SDK::FVector2D>& circlePoints, float 
 			ESP_color = GUI_Colors::NotVisible;
 	}
 
+	if (circlePoints.size() <= 10) return;
+
 	for (int i = 0; i < circlePoints.size()-1; i++)
 	{
 		SDK::FVector2D pointA = circlePoints[i];
@@ -375,6 +377,9 @@ inline void DrawCircle3D(const std::vector<SDK::FVector2D>& circlePoints, float 
 
 inline void DrawPill3D(const std::vector<SDK::FVector2D>& circleA, const std::vector<SDK::FVector2D>& circleB, float ESP_color[3], bool bRainbowMode = false, bool bVisibility = false)
 {
+	if (circleA.size() <= 10) return;
+	if (circleB.size() <= 10) return;
+
 	auto min = (circleA.size() < circleB.size() ? circleA.size() : circleB.size());
 
 	if (globals::rainbow && globals::rainbowESP && bRainbowMode)
