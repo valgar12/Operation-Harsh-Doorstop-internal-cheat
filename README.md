@@ -85,6 +85,6 @@ Inject once you are in game, it doesnt have a lobby check so if you inject in lo
 
 ## --CREDITS--
 
-It use the kiero directx 11 hook.
+https://github.com/rdbo/ImGui-DirectX-11-Kiero-Hook
 
-I uded Dumper 7 for the SDK.
+https://github.com/Encryqed/Dumper-7
