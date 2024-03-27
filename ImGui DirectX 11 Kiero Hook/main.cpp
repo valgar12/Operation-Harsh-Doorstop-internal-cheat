@@ -93,293 +93,339 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 		Draw_GUI();
 	}
 
-	PlayerArray = World->GameState->PlayerArray;
+	bool run = true;
+	if (IsBadPoint(World)) run = false;
+	if (!World) run = false;
 
-	float MaxDistance = FLT_MAX;
-	SDK::AActor* closest_actor{};
-	SDK::FRotator closest_actor_rotation{};
-	float MaxDistanceTP = FLT_MAX;
+	if (run) if (IsBadPoint(World->OwningGameInstance)) run = false;
+	if (run) if (!World->OwningGameInstance) run = false;
+	if (!run) World = SDK::UWorld::GetWorld();
+	if (!run) if (!IsBadPoint(World)) if (!IsBadPoint(World->OwningGameInstance)) run = true;
 
-	for (int i = 0; i < PlayerArray.Num(); i++)
+	if (run) if (IsBadPoint(World->OwningGameInstance->LocalPlayers[0])) run = false;
+	if (run) if (!World->OwningGameInstance->LocalPlayers[0]) run = false;
+	if (!run) World = SDK::UWorld::GetWorld();
+	if (!run) if (!IsBadPoint(World)) if (!IsBadPoint(World->OwningGameInstance->LocalPlayers[0])) run = true;
+
+	if (run) if (IsBadPoint(World->OwningGameInstance->LocalPlayers[0]->PlayerController)) run = false;
+	if (run) if (!World->OwningGameInstance->LocalPlayers[0]->PlayerController) run = false;
+	if (!run) World = SDK::UWorld::GetWorld();
+	if (!run) if (!IsBadPoint(World)) if (!IsBadPoint(World->OwningGameInstance->LocalPlayers[0]->PlayerController)) run = true;
+
+	if (run) if (IsBadPoint(World->GameState)) run = false;
+	if (run) if (!World->GameState) run = false;
+	if (!run) World = SDK::UWorld::GetWorld();
+	if (!run) if (!IsBadPoint(World)) if (!IsBadPoint(World->GameState)) run = true;
+	if (!run)
 	{
-		if (PlayerArray.Num() <= 5) continue;
-
-		ent = PlayerArray[i];
-
-		MyController = World->OwningGameInstance->LocalPlayers[0]->PlayerController;
-
-		if (!ent) continue;
-		if (!ent->PawnPrivate) continue;
-
-		if (!MyController) continue;
-		if (!MyController->PlayerCameraManager) continue;
-		if (!MyController->AcknowledgedPawn) continue;
-
-		if (ent == MyController->PlayerState) continue;
-
-		MyPawn = MyController->AcknowledgedPawn;
-		CharacterClass = static_cast<AHDPlayerCharacter*>(MyPawn);
-
-		auto ActorCharacterClass = static_cast<AHDPlayerCharacter*>(ent->PawnPrivate);
-
-		if (!ActorCharacterClass->Mesh) continue;
-
-		auto mesh = ActorCharacterClass->Mesh;
-
-		auto LocalPos = CharacterClass->ReplicatedMovement.Location;
-
-		auto Weapon = reinterpret_cast<AHDBaseWeapon*>(CharacterClass->EquippedItem);
-		auto EnemieWeapon = reinterpret_cast<AHDBaseWeapon*>(ActorCharacterClass->EquippedItem);
-		auto LocalTeam = CharacterClass->TeamNum;
-		auto Team = ActorCharacterClass->TeamNum;
-
-		if (globals::TeamCheck)
+		if (!IsBadPoint(World))
 		{
-			if (LocalTeam == Team) continue;
-		}
-
-		auto Health = ActorCharacterClass->Health;
-
-		if (Health <= 0) continue;
-
-		if (globals::rainbow)
-		{
-			StartRainbowColor();
-		}
-
-		SDK::FVector location{};
-		SDK::FVector BoxExtent{};
-		ActorCharacterClass->GetActorBounds(true, &location, &BoxExtent, false);
-
-		float ActorDistance = LocalPos.GetDistanceToInMeters(location);
-		std::string ActorDistanceString = ("[" + std::to_string(static_cast<int>(ActorDistance)) + " M]");
-
-		if (globals::superSpeed)
-		{
-			CharacterClass->CharacterMovement->MaxWalkSpeed = globals::Speed_force;
-			CharacterClass->CharacterMovement->MaxAcceleration = globals::Speed_force;
-		}
-		if (globals::Fly)
-		{
-			CharacterClass->CharacterMovement->MaxFlySpeed = 20000.f;
-			CharacterClass->CharacterMovement->MovementMode = SDK::EMovementMode::MOVE_Flying;
-			if (GetAsyncKeyState(VK_SPACE))
+			if (!IsBadPoint(World->GameState))
 			{
-				SDK::FVector posUP = { 0.f, 0.f, 10.f };
-				CharacterClass->CharacterMovement->AddInputVector(posUP, true);
-			}
-			if (GetAsyncKeyState(VK_LCONTROL))
-			{
-				SDK::FVector posDOWN = { 0.f, 0.f, -10.f };
-				CharacterClass->CharacterMovement->AddInputVector(posDOWN, true);
+				if (World->GameState)
+				{
+					if (!IsBadPoint(World->GameState->PlayerArray[0]))
+					{
+						run = true;
+						std::this_thread::sleep_for(std::chrono::milliseconds(200));
+					}
+				}
 			}
 		}
-		else
+	}  
+
+	if (run)
+	{
+		PlayerArray = World->GameState->PlayerArray;
+
+		float MaxDistance = FLT_MAX;
+		SDK::AActor* closest_actor{};
+		SDK::FRotator closest_actor_rotation{};
+		float MaxDistanceTP = FLT_MAX;
+
+		for (int i = 0; i < PlayerArray.Num(); i++)
 		{
-			if (CharacterClass->CharacterMovement->MovementMode == SDK::EMovementMode::MOVE_Flying)
-				CharacterClass->CharacterMovement->MovementMode = SDK::EMovementMode::MOVE_Falling;
-		}
+			if (PlayerArray.Num() <= 5) continue;
 
-		if (globals::GodMode)
-		{
-			CharacterClass->MaxHealth = 999.f;
-			CharacterClass->Health = 999.f;
-		}
-		if (globals::InfiniteAmmo)
-			Weapon->bUsesAmmo = false;
-		else
-			Weapon->bUsesAmmo = true;
+			if (IsBadPoint(PlayerArray[i])) continue;
+			ent = PlayerArray[i];
 
-		if (globals::InstaFireRate)
-		{
-			Weapon->FireRate = globals::FireRate;
-		}
-		if (globals::NoRecoil)
-		{
-			Weapon->bNoRecoil = true;
-		}
-		if (globals::BulletsPerShoot_bool)
-			Weapon->ShotsPerBurst = globals::BulletsPerShoot;
+			MyController = World->OwningGameInstance->LocalPlayers[0]->PlayerController;
 
-		auto CameraLocation = MyController->PlayerCameraManager->GetCameraLocation();
-		auto CameraRotation = MyController->PlayerCameraManager->GetCameraRotation();
+			if (!ent) continue;
+			if (!ent->PawnPrivate) continue;
 
+			if (!MyController) continue;
+			if (!MyController->PlayerCameraManager) continue;
+			if (!MyController->AcknowledgedPawn) continue;
 
-		FVector2D Top{};
-		FVector2D Bottom{};
-		FVector2D locationw2s{};
+			if (ent == MyController->PlayerState) continue;
 
-		SDK::FVector head_bone_pos = mesh->GetSocketLocation(mesh->GetBoneName(48));
+			MyPawn = MyController->AcknowledgedPawn;
+			CharacterClass = static_cast<AHDPlayerCharacter*>(MyPawn);
 
-		AimbotBone = head_bone_pos;
+			auto ActorCharacterClass = static_cast<AHDPlayerCharacter*>(ent->PawnPrivate);
 
-		SDK::FVector feet_bone_pos = mesh->GetSocketLocation(mesh->GetBoneName(59));
+			if (!ActorCharacterClass->Mesh) continue;
 
-		FVector feet_middle_pos = { location.X, location.Y, feet_bone_pos.Z };
+			auto mesh = ActorCharacterClass->Mesh;
 
-		if (globals::PlayerTp)
-		{
-			if (LocalPos.GetDistanceTo(location) <= MaxDistanceTP)
+			auto LocalPos = CharacterClass->ReplicatedMovement.Location;
+
+			auto Weapon = reinterpret_cast<AHDBaseWeapon*>(CharacterClass->EquippedItem);
+			auto EnemieWeapon = reinterpret_cast<AHDBaseWeapon*>(ActorCharacterClass->EquippedItem);
+			auto LocalTeam = CharacterClass->TeamNum;
+			auto Team = ActorCharacterClass->TeamNum;
+
+			if (globals::TeamCheck)
 			{
-				MaxDistanceTP = LocalPos.GetDistanceTo(location);
-				closest_actor_TP = location;
-			}
-		}
-
-		if (globals::ESP_FeetCircle3D)
-		{
-			circlePoints_Feet = generateCirclePoints(feet_middle_pos, 100.f, MyController);
-		}
-		if (globals::ESP_Pill3D)
-		{
-			circlePoints_Head = generateCirclePoints(head_bone_pos, 100.f, MyController);
-		}
-
-		if (MyController->LineOfSightTo(ActorCharacterClass, MyController->PlayerCameraManager->CameraCachePrivate.POV.Location, false))
-			isVIsible = true;
-		else isVIsible = false;
-			
-
-		if (globals::Chams && ChamsMat)
-		{
-			ApplyChams(mesh, ChamsMat, globals::ChamsColor, true, true, isVIsible);
-		}
-
-		if (globals::WeaponChams && WeaponChamsMat && Weapon)
-		{
-			if (!Weapon->GetWeaponMesh1P()) continue;
-
-			ApplyChams(Weapon->GetWeaponMesh1P(), WeaponChamsMat, globals::ChamsWeaponColor, true, false, isVIsible);
-		}
-
-		if (globals::EnemieWeaponChams && EnemieWEaponMat && EnemieWeapon)
-		{
-			if (!EnemieWeapon->GetWeaponMesh1P()) continue;
-
-			ApplyChams(EnemieWeapon->GetWeaponMesh1P(), EnemieWEaponMat, globals::EnemieWeaponChamsColor, false, false, isVIsible);
-		}
-		if (globals::ShowFPS)
-		{
-			std::string fps = std::to_string(static_cast<int>(ImGui::GetIO().Framerate));
-			ImGui::GetBackgroundDrawList()->AddText(ImVec2(1920 - ImGui::CalcTextSize(fps.c_str()).x, 0), ImColor(0.f, 255.f, 0.f), fps.c_str());
-		}
-		if (globals::ShowMouse && showmenu)
-		{
-			auto MousePos = ImGui::GetMousePos();
-			ImGui::GetForegroundDrawList()->AddCircleFilled(MousePos, 4.f, ImColor{ 1.f, 1.f, 1.f });
-		}
-		if (globals::Croshhair)
-			ESP::DrawCrosshair(globals::CroshhairSize, globals::CroshhairColor, globals::CroshhairWidth, true, false);
-
-		if (MyController->ProjectWorldLocationToScreen(feet_middle_pos, &Bottom, false) && MyController->ProjectWorldLocationToScreen(head_bone_pos, &Top, false))
-		{
-			const float h = Bottom.Y - Top.Y;
-			const float w = h * 0.3f;
-
-			if (globals::ESP_Distance_bool)
-			{
-				if (LocalPos.GetDistanceTo(location) >= globals::ESP_Distance) continue;
+				if (LocalTeam == Team) continue;
 			}
 
-			if (globals::ESP_Skeleton)
-			{
-				DrawBones(mesh, MyController, GUI_Colors::Visible, true, true);
-			}
-			if (globals::ESP_Box)
-			{
-				ESP::DrawBox({ Top.X - w, Top.Y }, { Bottom.X + w, Bottom.Y }, GUI_Colors::Visible, 0.f, true, true);
-				ESP::DrawBox({ Top.X - w - 1, Top.Y - 1 }, { Bottom.X + w + 1, Bottom.Y + 1 }, Colors::Black, 0.f, false, false);
-				ESP::DrawBox({ Top.X - w + 1, Top.Y + 1 }, { Bottom.X + w - 1, Bottom.Y - 1 }, Colors::Black, 0.f, false, false);
-			}
-			if (globals::ESP_BoxCornered)
-			{
-				ESP::DrawCornerBox(Top.X - w + 1, Top.Y + 1, w * 1.8f - 2, h - 2, 1, Colors::Black, false, false); //IN
-				ESP::DrawCornerBox(Top.X - w - 1, Top.Y - 1, w * 1.8f + 2, h + 2, 1, Colors::Black, false, false); //OUT
-				ESP::DrawCornerBox(Top.X - w, Top.Y, w * 1.8f, h, 1, GUI_Colors::Visible, true, true); //middle
-			}
-			if (globals::ESP_Names)
-			{
-				ESP::DrawText2({ Top.X - w, Top.Y - 15 }, GUI_Colors::Visible, ent->PawnPrivate->GetName().c_str(), false, false);
+			auto Health = ActorCharacterClass->Health;
 
-			}
-			if (globals::ESP_Snaplines)
+			if (Health <= 0) continue;
+
+			if (globals::rainbow)
 			{
-				ESP::DrawLine({ 1920 / 2, 0 }, Top, GUI_Colors::Visible, 1.f, true, true);
+				StartRainbowColor();
+			}
+
+			SDK::FVector location{};
+			SDK::FVector BoxExtent{};
+			ActorCharacterClass->GetActorBounds(true, &location, &BoxExtent, false);
+
+			float ActorDistance = LocalPos.GetDistanceToInMeters(location);
+			std::string ActorDistanceString = ("[" + std::to_string(static_cast<int>(ActorDistance)) + " M]");
+
+			if (globals::superSpeed)
+			{
+				CharacterClass->CharacterMovement->MaxWalkSpeed = globals::Speed_force;
+				CharacterClass->CharacterMovement->MaxAcceleration = globals::Speed_force;
+			}
+			if (globals::Fly)
+			{
+				CharacterClass->CharacterMovement->MaxFlySpeed = 20000.f;
+				CharacterClass->CharacterMovement->MovementMode = SDK::EMovementMode::MOVE_Flying;
+				if (GetAsyncKeyState(VK_SPACE))
+				{
+					SDK::FVector posUP = { 0.f, 0.f, 10.f };
+					CharacterClass->CharacterMovement->AddInputVector(posUP, true);
+				}
+				if (GetAsyncKeyState(VK_LCONTROL))
+				{
+					SDK::FVector posDOWN = { 0.f, 0.f, -10.f };
+					CharacterClass->CharacterMovement->AddInputVector(posDOWN, true);
+				}
+			}
+			else
+			{
+				if (CharacterClass->CharacterMovement->MovementMode == SDK::EMovementMode::MOVE_Flying)
+					CharacterClass->CharacterMovement->MovementMode = SDK::EMovementMode::MOVE_Falling;
+			}
+
+			if (globals::GodMode)
+			{
+				CharacterClass->MaxHealth = 999.f;
+				CharacterClass->Health = 999.f;
+			}
+			if (globals::InfiniteAmmo)
+				Weapon->bUsesAmmo = false;
+			else
+				Weapon->bUsesAmmo = true;
+
+			if (globals::InstaFireRate)
+			{
+				Weapon->FireRate = globals::FireRate;
+			}
+			if (globals::NoRecoil)
+			{
+				Weapon->bNoRecoil = true;
+			}
+			if (globals::BulletsPerShoot_bool)
+				Weapon->ShotsPerBurst = globals::BulletsPerShoot;
+
+			auto CameraLocation = MyController->PlayerCameraManager->GetCameraLocation();
+			auto CameraRotation = MyController->PlayerCameraManager->GetCameraRotation();
+
+
+			FVector2D Top{};
+			FVector2D Bottom{};
+			FVector2D locationw2s{};
+
+			SDK::FVector head_bone_pos = mesh->GetSocketLocation(mesh->GetBoneName(48));
+
+			AimbotBone = head_bone_pos;
+
+			SDK::FVector feet_bone_pos = mesh->GetSocketLocation(mesh->GetBoneName(59));
+
+			FVector feet_middle_pos = { location.X, location.Y, feet_bone_pos.Z };
+
+			if (globals::PlayerTp)
+			{
+				if (LocalPos.GetDistanceTo(location) <= MaxDistanceTP)
+				{
+					MaxDistanceTP = LocalPos.GetDistanceTo(location);
+					closest_actor_TP = location;
+				}
 			}
 
 			if (globals::ESP_FeetCircle3D)
 			{
-				DrawCircle3D(circlePoints_Feet, Colors::White, false, false);
+				circlePoints_Feet = generateCirclePoints(feet_middle_pos, 100.f, MyController);
 			}
 			if (globals::ESP_Pill3D)
 			{
-				DrawPill3D(circlePoints_Feet, circlePoints_Head, Colors::White, true, false);
-			}
-			if (globals::ESP_3DBox)
-			{
-				ESP::Draw3DBox(location, BoxExtent, MyController, GUI_Colors::Visible, true, true);
-			}
-			if (globals::DrawFov)
-			{
-				ESP::DrawCircle({ 1920 / 2, 1080 / 2 }, globals::aimbot_FOV, Colors::White, 50, 1.f, true, false);
-			}
-			if (globals::ESP_HealthBar)
-			{
-				ESP::DrawFilledBox({ Top.X - w - 6, Top.Y }, { Top.X - w - 3, Bottom.Y }, Colors::Black, 0.f, false, false);
-				ESP::DrawFilledBox({ Top.X - w - 5, Bottom.Y - (h * (Health * 0.01f)) }, { Top.X - w - 4, Bottom.Y }, Colors::Green, 0.f, false, false);
-			}
-			if (globals::ESP_DistanceText)
-			{
-				ESP::DrawText2({ Bottom.X - w, Bottom.Y - h - 12 }, Colors::White, (ActorDistanceString).c_str(), true, false);
-			}
-			if (isVIsible && globals::ESP_VisibleLIne)
-			{
-				if (isVIsible)
-					ESP::DrawLine({ 1920 / 2, 1080 / 2 }, { Top.X, Top.Y }, Colors::Green, 1.f, false, false);
+				circlePoints_Head = generateCirclePoints(head_bone_pos, 100.f, MyController);
 			}
 
-			if (globals::VisCheckAim)
+			if (MyController->LineOfSightTo(ActorCharacterClass, MyController->PlayerCameraManager->CameraCachePrivate.POV.Location, false))
+				isVIsible = true;
+			else isVIsible = false;
+
+
+			if (globals::Chams && ChamsMat)
 			{
-				if (!isVIsible) continue;
+				ApplyChams(mesh, ChamsMat, globals::ChamsColor, true, true, isVIsible);
 			}
 
-			FVector2D w2s_head_bone_pos{};
-			if (MyController->ProjectWorldLocationToScreen(head_bone_pos, &w2s_head_bone_pos, false))
+			if (globals::WeaponChams && WeaponChamsMat && Weapon)
 			{
-				auto rot = UKismetMathLibrary::FindLookAtRotation(CameraLocation, head_bone_pos);
+				if (!Weapon) continue;
+				if (!Weapon->GetWeaponMesh1P()) continue;
 
-				FVector2D screen_middle = { 1920 / 2, 1080 / 2 };
+				ApplyChams(Weapon->GetWeaponMesh1P(), WeaponChamsMat, globals::ChamsWeaponColor, true, false, isVIsible);
+			}
 
-				aimbot_distance = UKismetMathLibrary::Distance2D(w2s_head_bone_pos, screen_middle);
+			/*if (globals::EnemieWeaponChams && EnemieWEaponMat && EnemieWeapon)
+			{
+				if (!EnemieWeapon) continue;
+				if (!EnemieWeapon->GetWeaponMesh1P()) continue;
 
-				if (aimbot_distance < MaxDistance && aimbot_distance <= globals::aimbot_FOV)
+				ApplyChams(EnemieWeapon->GetWeaponMesh1P(), EnemieWEaponMat, globals::EnemieWeaponChamsColor, false, false, isVIsible);
+			}*/
+			if (globals::ShowFPS)
+			{
+				std::string fps = std::to_string(static_cast<int>(ImGui::GetIO().Framerate));
+				ImGui::GetBackgroundDrawList()->AddText(ImVec2(1920 - ImGui::CalcTextSize(fps.c_str()).x, 0), ImColor(0.f, 255.f, 0.f), fps.c_str());
+			}
+			if (globals::ShowMouse && showmenu)
+			{
+				auto MousePos = ImGui::GetMousePos();
+				ImGui::GetForegroundDrawList()->AddCircleFilled(MousePos, 4.f, ImColor{ 1.f, 1.f, 1.f });
+			}
+			if (globals::Croshhair)
+				ESP::DrawCrosshair(globals::CroshhairSize, globals::CroshhairColor, globals::CroshhairWidth, true, false);
+
+			if (MyController->ProjectWorldLocationToScreen(feet_middle_pos, &Bottom, false) && MyController->ProjectWorldLocationToScreen(head_bone_pos, &Top, false))
+			{
+				const float h = Bottom.Y - Top.Y;
+				const float w = h * 0.3f;
+
+				if (globals::ESP_Distance_bool)
 				{
-					MaxDistance = aimbot_distance;
-					closest_actor = ent->PawnPrivate;
-					closest_actor_rotation = rot;
-					closest_actor_head = head_bone_pos;
-					closest_actor_headw2s = w2s_head_bone_pos;
-					if (isVIsible) closest_actor_visible = true;
-					else closest_actor_visible = false;
+					if (LocalPos.GetDistanceTo(location) >= globals::ESP_Distance) continue;
 				}
+
+				if (globals::ESP_Skeleton)
+				{
+					DrawBones(mesh, MyController, GUI_Colors::Visible, true, true);
+				}
+				if (globals::ESP_Box)
+				{
+					ESP::DrawBox({ Top.X - w, Top.Y }, { Bottom.X + w, Bottom.Y }, GUI_Colors::Visible, 0.f, true, true);
+					ESP::DrawBox({ Top.X - w - 1, Top.Y - 1 }, { Bottom.X + w + 1, Bottom.Y + 1 }, Colors::Black, 0.f, false, false);
+					ESP::DrawBox({ Top.X - w + 1, Top.Y + 1 }, { Bottom.X + w - 1, Bottom.Y - 1 }, Colors::Black, 0.f, false, false);
+				}
+				if (globals::ESP_BoxCornered)
+				{
+					ESP::DrawCornerBox(Top.X - w + 1, Top.Y + 1, w * 1.8f - 2, h - 2, 1, Colors::Black, false, false); //IN
+					ESP::DrawCornerBox(Top.X - w - 1, Top.Y - 1, w * 1.8f + 2, h + 2, 1, Colors::Black, false, false); //OUT
+					ESP::DrawCornerBox(Top.X - w, Top.Y, w * 1.8f, h, 1, GUI_Colors::Visible, true, true); //middle
+				}
+				if (globals::ESP_Names)
+				{
+					ESP::DrawText2({ Top.X - w, Top.Y - 15 }, GUI_Colors::Visible, ent->PawnPrivate->GetName().c_str(), false, false);
+
+				}
+				if (globals::ESP_Snaplines)
+				{
+					ESP::DrawLine({ 1920 / 2, 0 }, Top, GUI_Colors::Visible, 1.f, true, true);
+				}
+
+				if (globals::ESP_FeetCircle3D)
+				{
+					DrawCircle3D(circlePoints_Feet, Colors::White, false, false);
+				}
+				if (globals::ESP_Pill3D)
+				{
+					DrawPill3D(circlePoints_Feet, circlePoints_Head, Colors::White, true, false);
+				}
+				if (globals::ESP_3DBox)
+				{
+					ESP::Draw3DBox(location, BoxExtent, MyController, GUI_Colors::Visible, true, true);
+				}
+				if (globals::DrawFov)
+				{
+					ESP::DrawCircle({ 1920 / 2, 1080 / 2 }, globals::aimbot_FOV, Colors::White, 50, 1.f, true, false);
+				}
+				if (globals::ESP_HealthBar)
+				{
+					ESP::DrawFilledBox({ Top.X - w - 6, Top.Y }, { Top.X - w - 3, Bottom.Y }, Colors::Black, 0.f, false, false);
+					ESP::DrawFilledBox({ Top.X - w - 5, Bottom.Y - (h * (Health * 0.01f)) }, { Top.X - w - 4, Bottom.Y }, Colors::Green, 0.f, false, false);
+				}
+				if (globals::ESP_DistanceText)
+				{
+					ESP::DrawText2({ Bottom.X - w, Bottom.Y - h - 12 }, Colors::White, (ActorDistanceString).c_str(), true, false);
+				}
+				if (isVIsible && globals::ESP_VisibleLIne)
+				{
+					if (isVIsible)
+						ESP::DrawLine({ 1920 / 2, 1080 / 2 }, { Top.X, Top.Y }, Colors::Green, 1.f, false, false);
+				}
+
+				if (globals::VisCheckAim)
+				{
+					if (!isVIsible) continue;
+				}
+
+				FVector2D w2s_head_bone_pos{};
+				if (MyController->ProjectWorldLocationToScreen(head_bone_pos, &w2s_head_bone_pos, false))
+				{
+					auto rot = UKismetMathLibrary::FindLookAtRotation(CameraLocation, head_bone_pos);
+
+					FVector2D screen_middle = { 1920 / 2, 1080 / 2 };
+
+					aimbot_distance = UKismetMathLibrary::Distance2D(w2s_head_bone_pos, screen_middle);
+
+					if (aimbot_distance < MaxDistance && aimbot_distance <= globals::aimbot_FOV)
+					{
+						MaxDistance = aimbot_distance;
+						closest_actor = ent->PawnPrivate;
+						closest_actor_rotation = rot;
+						closest_actor_head = head_bone_pos;
+						closest_actor_headw2s = w2s_head_bone_pos;
+						if (isVIsible) closest_actor_visible = true;
+						else closest_actor_visible = false;
+					}
+				}
+
 			}
+		}
+		if (closest_actor && globals::aimbot && GetAsyncKeyState(VK_XBUTTON1))
+		{
+			MyController->SetControlRotation(closest_actor_rotation);
 
 		}
-	}
-	if (closest_actor && globals::aimbot && GetAsyncKeyState(VK_XBUTTON1))
-	{
-		MyController->SetControlRotation(closest_actor_rotation);
-
-	}
-	if (closest_actor && globals::ESP_AimLine)
-	{
-		ESP::DrawLine({ 1920 / 2, 1080 / 2 }, closest_actor_headw2s, GUI_Colors::Visible, 1.f, false, false);
-	}
-	if (closest_actor_TP.X != 0 && globals::PlayerTp && GetAsyncKeyState(VK_LMENU))
-	{
-		CharacterClass->K2_TeleportTo({ closest_actor_TP.X + 100.f, closest_actor_TP.Y, closest_actor_TP.Z + 100.f }, MyController->PlayerCameraManager->GetCameraRotation());
-	}
-			
+		if (closest_actor && globals::ESP_AimLine)
+		{
+			ESP::DrawLine({ 1920 / 2, 1080 / 2 }, closest_actor_headw2s, GUI_Colors::Visible, 1.f, false, false);
+		}
+		if (closest_actor_TP.X != 0 && globals::PlayerTp && GetAsyncKeyState(VK_LMENU))
+		{
+			CharacterClass->K2_TeleportTo({ closest_actor_TP.X + 100.f, closest_actor_TP.Y, closest_actor_TP.Z + 100.f }, MyController->PlayerCameraManager->GetCameraRotation());
+		}
+	}		
 
 	if (!alive)
 	{
@@ -423,7 +469,7 @@ DWORD MainThread(HMODULE hModule)
 		WireframeMaterial->MaterialDomain = SDK::EMaterialDomain::MD_Surface;
 		WireframeMaterial->AllowTranslucentCustomDepthWrites = true;
 		WireframeMaterial->bIsBlendable = true;
-		WireframeMaterial->LightmassSettings.EmissiveBoost = 999;
+		WireframeMaterial->LightmassSettings.EmissiveBoost = 2;
 		WireframeMaterial->LightmassSettings.DiffuseBoost = 0;
 	}
 	
