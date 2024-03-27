@@ -5,6 +5,10 @@ The game doesnt have anticheat so its undetectable in multiplayer.
 ## --SHOWCASE--
 https://www.youtube.com/watch?v=y9aHbnuBUEE&t=12s&ab_channel=Valgar1
 
+## --VERSIONS--
+
+1.1 Fixed crash in lobby, now it shouldnt crash when you inject in lobby or when you return to the lobby
+
 ## --FEATURES--
 
 ### -ESP
@@ -81,7 +85,7 @@ https://www.youtube.com/watch?v=y9aHbnuBUEE&t=12s&ab_channel=Valgar1
 
 Compile in x64 release and inject the dll to the game (you can use process hacker).
 
-Inject once you are in game, it doesnt have a lobby check so if you inject in lobby it will crash, or if you go to the lobby it wil crash.
+Inject once you are in the gaame.
 
 ## --CREDITS--
 
