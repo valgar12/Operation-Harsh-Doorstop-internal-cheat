@@ -85,6 +85,8 @@ https://www.youtube.com/watch?v=y9aHbnuBUEE&t=12s&ab_channel=Valgar1
 
 Compile in x64 release and inject the dll to the game (you can use process hacker).
 
+### Make sure you are playing on full screen windowed mode and 1920x1080.
+
 Inject once you are in the gaame.
 
 ## --CREDITS--
