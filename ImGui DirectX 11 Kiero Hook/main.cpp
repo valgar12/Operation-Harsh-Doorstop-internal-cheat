@@ -162,9 +162,12 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 			if (ent == MyController->PlayerState) continue;
 
 			MyPawn = MyController->AcknowledgedPawn;
+			if (!MyPawn) continue;
 			CharacterClass = static_cast<AHDPlayerCharacter*>(MyPawn);
+			if (!CharacterClass) continue;
 
 			auto ActorCharacterClass = static_cast<AHDPlayerCharacter*>(ent->PawnPrivate);
+			if (!ActorCharacterClass) continue;
 
 			if (!ActorCharacterClass->Mesh) continue;
 
@@ -173,7 +176,7 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 			auto LocalPos = CharacterClass->ReplicatedMovement.Location;
 
 			auto Weapon = reinterpret_cast<AHDBaseWeapon*>(CharacterClass->EquippedItem);
-			auto EnemieWeapon = reinterpret_cast<AHDBaseWeapon*>(ActorCharacterClass->EquippedItem);
+			if (!Weapon) continue;
 			auto LocalTeam = CharacterClass->TeamNum;
 			auto Team = ActorCharacterClass->TeamNum;
 
@@ -182,6 +185,7 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 				if (LocalTeam == Team) continue;
 			}
 
+			if (!ActorCharacterClass->Health) continue;
 			auto Health = ActorCharacterClass->Health;
 
 			if (Health <= 0) continue;
@@ -228,13 +232,20 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 			{
 				CharacterClass->MaxHealth = 999.f;
 				CharacterClass->Health = 999.f;
+				CharacterClass->bCanBeDamaged = false;
 			}
 			if (globals::InfiniteAmmo)
+			{
 				Weapon->bUsesAmmo = false;
+				Weapon->bSimulateGunReloadOnDedicatedServer = true;
+			}
+				
 			else
+			{
 				Weapon->bUsesAmmo = true;
-
-			if (globals::InstaFireRate)
+				Weapon->bSimulateGunReloadOnDedicatedServer = false;
+			}
+			if (globals::InstaFireRate && Weapon)
 			{
 				Weapon->FireRate = globals::FireRate;
 			}
@@ -244,10 +255,23 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 			}
 			if (globals::BulletsPerShoot_bool)
 				Weapon->ShotsPerBurst = globals::BulletsPerShoot;
+			if (globals::FOVChanger)
+			{
+				MyController->FOV(globals::FOVCHangerValue);
+			}
+			if (globals::NoGravity)
+			{
+				CharacterClass->CharacterMovement->GravityScale = 0.17f;
+			}
+			else
+			{
+				CharacterClass->CharacterMovement->GravityScale = 1.f;
+			}
+				
+			if (!MyController->PlayerCameraManager) continue;
 
 			auto CameraLocation = MyController->PlayerCameraManager->GetCameraLocation();
 			auto CameraRotation = MyController->PlayerCameraManager->GetCameraRotation();
-
 
 			FVector2D Top{};
 			FVector2D Bottom{};
@@ -279,6 +303,12 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 				circlePoints_Head = generateCirclePoints(head_bone_pos, 100.f, MyController);
 			}
 
+			if (globals::ESP_3DBox)
+			{
+				Box3DHead = generateBox3DPoints(head_bone_pos, 70.f, MyController);
+				Box3DFeets = generateBox3DPoints(feet_middle_pos, 70.f, MyController);
+			}
+
 			if (MyController->LineOfSightTo(ActorCharacterClass, MyController->PlayerCameraManager->CameraCachePrivate.POV.Location, false))
 				isVIsible = true;
 			else isVIsible = false;
@@ -293,17 +323,11 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 			{
 				if (!Weapon) continue;
 				if (!Weapon->GetWeaponMesh1P()) continue;
+				if (!Weapon->GetWeaponMesh()) continue;
 
 				ApplyChams(Weapon->GetWeaponMesh1P(), WeaponChamsMat, globals::ChamsWeaponColor, true, false, isVIsible);
+				ApplyChams(Weapon->GetWeaponMesh(), WeaponChamsMat, globals::ChamsWeaponColor, true, false, isVIsible);
 			}
-
-			/*if (globals::EnemieWeaponChams && EnemieWEaponMat && EnemieWeapon)
-			{
-				if (!EnemieWeapon) continue;
-				if (!EnemieWeapon->GetWeaponMesh1P()) continue;
-
-				ApplyChams(EnemieWeapon->GetWeaponMesh1P(), EnemieWEaponMat, globals::EnemieWeaponChamsColor, false, false, isVIsible);
-			}*/
 			if (globals::ShowFPS)
 			{
 				std::string fps = std::to_string(static_cast<int>(ImGui::GetIO().Framerate));
@@ -363,7 +387,9 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 				}
 				if (globals::ESP_3DBox)
 				{
-					ESP::Draw3DBox(location, BoxExtent, MyController, GUI_Colors::Visible, true, true);
+					DrawCircle3D(Box3DHead, Colors::White, true, true, true);
+					DrawCircle3D(Box3DFeets, Colors::White, true, true, true);
+					DrawPill3D(Box3DHead, Box3DFeets, Colors::Red, true, true, true);
 				}
 				if (globals::DrawFov)
 				{

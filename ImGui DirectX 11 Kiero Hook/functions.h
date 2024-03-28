@@ -8,7 +8,7 @@
 
 namespace ESP
 {
-	inline void DrawLine(SDK::FVector2D posA, SDK::FVector2D posB, float color[3], float t = 1.f, bool bRainbowMode = false, bool bVisibility = false)
+	inline void DrawLine(SDK::FVector2D posA, SDK::FVector2D posB, float color[3], float t = 1.f, bool bRainbowMode = false, bool bVisibility = false, bool outline = false)
 	{
 		if (globals::rainbow && globals::rainbowESP && bRainbowMode)
 		{
@@ -22,6 +22,8 @@ namespace ESP
 				color = GUI_Colors::NotVisible;
 		}
 
+		if (outline)
+			draw_list->AddLine(ImVec2(posA.X, posA.Y), ImVec2(posB.X, posB.Y), ImColor(0.f, 0.f, 0.f), t+1.f);
 		draw_list->AddLine(ImVec2(posA.X, posA.Y), ImVec2(posB.X, posB.Y), ImColor(color[0], color[1], color[2]), t);
 	}
 
@@ -312,7 +314,7 @@ inline void DrawBones(SDK::USkeletalMeshComponent* mesh, SDK::APlayerController*
 		if (controller->ProjectWorldLocationToScreen(bone_location1, &bone1_w2s, false) &&
 			controller->ProjectWorldLocationToScreen(bone_location2, &bone2_w2s, false))
 		{
-			ESP::DrawLine(bone1_w2s, bone2_w2s, ESP_color, 1.f, bRainbowMode, bVisibility);
+			ESP::DrawLine(bone1_w2s, bone2_w2s, ESP_color, 1.f, bRainbowMode, bVisibility, true);
 		}
 	}
 }
@@ -341,8 +343,30 @@ std::vector<SDK::FVector2D> generateCirclePoints(const SDK::FVector& head, float
 
 	return circlePoints;
 }
+std::vector<SDK::FVector2D> generateBox3DPoints(const SDK::FVector& head, float radius, SDK::APlayerController* Controller) {
+	std::vector<SDK::FVector2D> circlePoints;
 
-inline void DrawCircle3D(const std::vector<SDK::FVector2D>& circlePoints, float ESP_color[3], bool bRainbowMode = false, bool bVisibility = false)
+	int numPoints = 4;
+	float angleIncrement = (2 * PI) / numPoints;
+
+	for (int i = 0; i < numPoints; ++i) {
+		float angle = angleIncrement * i;
+		float x = head.X + radius * cos(angle);
+		float y = head.Y + radius * sin(angle);
+		float z = head.Z;
+
+
+		SDK::FVector2D projectedPoint{};
+		if (Controller->ProjectWorldLocationToScreen(SDK::FVector{ x, y, z }, &projectedPoint, false))
+		{
+			circlePoints.push_back(projectedPoint);
+		}
+	}
+
+	return circlePoints;
+}
+
+inline void DrawCircle3D(const std::vector<SDK::FVector2D>& circlePoints, float ESP_color[3], bool bRainbowMode = false, bool bVisibility = false, bool outline = false)
 {
 
 	if (globals::rainbow && globals::rainbowESP && bRainbowMode)
@@ -357,7 +381,7 @@ inline void DrawCircle3D(const std::vector<SDK::FVector2D>& circlePoints, float 
 			ESP_color = GUI_Colors::NotVisible;
 	}
 
-	if (circlePoints.size() <= 10) return;
+	if (circlePoints.size() <= 2) return;
 
 	for (int i = 0; i < circlePoints.size()-1; i++)
 	{
@@ -368,17 +392,22 @@ inline void DrawCircle3D(const std::vector<SDK::FVector2D>& circlePoints, float 
 		{
 			SDK::FVector2D point1 = circlePoints[i+1];
 			SDK::FVector2D point2 = circlePoints[0];
-			ESP::DrawLine(point1, point2, ESP_color, 1.f, bRainbowMode, bVisibility);
+			if (!outline)
+				ESP::DrawLine(point1, point2, ESP_color, 1.f, bRainbowMode, bVisibility);
+			else
+				ESP::DrawLine(point1, point2, ESP_color, 1.f, bRainbowMode, bVisibility, true);
 		}
-
-		ESP::DrawLine(pointA, pointB, ESP_color, 1.f, bVisibility, bRainbowMode);
+		if (!outline)
+			ESP::DrawLine(pointA, pointB, ESP_color, 1.f, bVisibility, bRainbowMode);
+		else
+			ESP::DrawLine(pointA, pointB, ESP_color, 1.f, bVisibility, bRainbowMode, true);
 	}
 }
 
-inline void DrawPill3D(const std::vector<SDK::FVector2D>& circleA, const std::vector<SDK::FVector2D>& circleB, float ESP_color[3], bool bRainbowMode = false, bool bVisibility = false)
+inline void DrawPill3D(const std::vector<SDK::FVector2D>& circleA, const std::vector<SDK::FVector2D>& circleB, float ESP_color[3], bool bRainbowMode = false, bool bVisibility = false, bool outline = false)
 {
-	if (circleA.size() <= 10) return;
-	if (circleB.size() <= 10) return;
+	if (circleA.size() <= 2) return;
+	if (circleB.size() <= 2) return;
 
 	auto min = (circleA.size() < circleB.size() ? circleA.size() : circleB.size());
 
@@ -399,7 +428,10 @@ inline void DrawPill3D(const std::vector<SDK::FVector2D>& circleA, const std::ve
 		SDK::FVector2D posA = circleA[i];
 		SDK::FVector2D posB = circleB[i];
 
-		ESP::DrawLine(posA, posB, ESP_color, 1.f, bRainbowMode, bVisibility);
+		if (!outline)
+			ESP::DrawLine(posA, posB, ESP_color, 1.f, bRainbowMode, bVisibility);
+		else
+			ESP::DrawLine(posA, posB, ESP_color, 1.f, bRainbowMode, bVisibility, true);
 	}
 }
 
@@ -458,7 +490,10 @@ inline void ApplyChams(SDK::USkeletalMeshComponent* mesh, SDK::UMaterialInstance
 		}
 		else
 		{
-			material->SetVectorParameterValue(StrToName(L"Color"), FloatToColor(color));
+			if (globals::WeaponChamsInvisible)
+				material->SetVectorParameterValue(StrToName(L"Color"), SDK::FLinearColor{0.f, 0.f, 0.f});
+			else
+				material->SetVectorParameterValue(StrToName(L"Color"), FloatToColor(color));
 			for (int t = 0; t < Mats.Num(); t++)
 			{
 				if (Mats[t])
@@ -524,6 +559,16 @@ inline bool IsBadPoint(SDK::AGameStateBase* ptr)
 
 	else return false;
 }
+inline bool IsBadPoint(SDK::UProjectileMovementComponent* ptr)
+{
+	std::uintptr_t Pointer = reinterpret_cast<std::uintptr_t>(ptr);
+
+	if ((Pointer < 0xFFFFFFFFFFULL) || (Pointer > 0x2FFFFFFFFFFULL))
+		return true;
+
+	else return false;
+}
+
 
 inline void StartRainbowColor()
 {

@@ -6,8 +6,6 @@
 
 namespace globals
 {
-	inline bool superSpeed = false;
-	inline float Speed_force = 5000.f;
 	inline bool ESP_Box = false;
 	inline bool ESP_3DBox = false;
 	inline bool ESP_BoxCornered = false;
@@ -27,6 +25,7 @@ namespace globals
 	inline bool Chams = true;
 	inline float ChamsColor[3]{ 1.f, 0.f, 1.f };
 	inline bool WeaponChams = true;
+	inline bool WeaponChamsInvisible = false;
 	inline float ChamsWeaponColor[3]{ 0.f, 1.f, 0.f };
 	inline bool ChamsVisible = true;
 	inline bool EnemieWeaponChams = true;
@@ -41,8 +40,15 @@ namespace globals
 	inline bool aimbot = true;
 	inline bool DrawFov = true;
 	inline float aimbot_FOV = 1000.f;
+	inline bool VisCheckAim = true;
 
+	inline bool superSpeed = false;
+	inline float Speed_force = 5000.f;
+	inline bool Fly = false;
+	inline bool FOVChanger = false;
+	inline float FOVCHangerValue = 140.f;
 	inline bool InfiniteAmmo = false;
+	inline bool NoGravity = false;
 	inline bool GodMode = false;
 	inline bool NoRecoil = true;
 	inline bool InstaFireRate = false;
@@ -50,14 +56,12 @@ namespace globals
 	inline bool BulletsPerShoot_bool = false;
 	inline int BulletsPerShoot = 2;
 	inline bool PlayerTp = false;
-	inline bool VisCheckAim = true;
 
-	inline bool Fly = false;
 	inline bool TeamCheck = true;
 	inline bool ShowFPS = true;
-	inline bool Croshhair = false;
-	inline float CroshhairSize = 5.f;
-	inline float CroshhairWidth = 2.f;
+	inline bool Croshhair = true;
+	inline float CroshhairSize = 3.f;
+	inline float CroshhairWidth = 1.f;
 	inline float CroshhairColor[3]{ 255.f, 0.f, 0.f };
 }
 
@@ -82,6 +86,8 @@ bool closest_actor_visible{};
 SDK::APawn* MyPawn{};
 std::vector<SDK::FVector2D> circlePoints_Feet{};
 std::vector<SDK::FVector2D> circlePoints_Head{};
+std::vector<SDK::FVector2D> Box3DHead{};
+std::vector<SDK::FVector2D> Box3DFeets{};
 SDK::FVector AimbotBone{};
 const SDK::APlayerState* ent{};
 SDK::TArray<class SDK::APlayerState*> PlayerArray{};

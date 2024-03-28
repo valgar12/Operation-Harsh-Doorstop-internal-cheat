@@ -16,6 +16,8 @@ inline void Draw_GUI()
 		if (ImGui::BeginTabItem("Aim"))
 		{
 			ImGui::Checkbox("Aimbot", &globals::aimbot);
+			ImGui::SameLine();
+			ImGui::Text("(XBUTTON2)");
 			ImGui::SliderFloat("FOV", &globals::aimbot_FOV, 1.f, 3000.f);
 			ImGui::Checkbox("Draw FOV", &globals::DrawFov);
 			ImGui::Checkbox("Vis check", &globals::VisCheckAim);
@@ -30,14 +32,19 @@ inline void Draw_GUI()
 			ImGui::Spacing();
 			ImGui::Separator();
 			ImGui::Spacing();
+			ImGui::Checkbox("FOV Changer", &globals::FOVChanger);
+			ImGui::SliderFloat("FOV Changer", &globals::FOVCHangerValue, 1.f, 400.f);
 			ImGui::Checkbox("God Mode", &globals::GodMode);
 			ImGui::Checkbox("Infinite Ammo", &globals::InfiniteAmmo);
+			ImGui::Checkbox("No Gravity", &globals::NoGravity);
 			ImGui::Checkbox("No Recoil", &globals::NoRecoil);
 			ImGui::Checkbox("Bullets Per Burst", &globals::BulletsPerShoot_bool);
 			ImGui::SliderInt("Bullets Per Burst", &globals::BulletsPerShoot, 1, 4);
 			ImGui::Checkbox("Insta FireRate", &globals::InstaFireRate);
 			ImGui::SliderFloat("Fire Rate", &globals::FireRate, 0.001f, 0.05f);
 			ImGui::Checkbox("Player TP", &globals::PlayerTp);
+			ImGui::SameLine();
+			ImGui::Text("(Left ALT)");
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Visuals"))
@@ -49,6 +56,7 @@ inline void Draw_GUI()
 			ImGui::Checkbox("Weapon Chams", &globals::WeaponChams);
 			ImGui::SameLine();
 			ImGui::ColorEdit3("##Weapon Chams color", globals::ChamsWeaponColor, ImGuiColorEditFlags_NoInputs);
+			ImGui::Checkbox("Invisible weapon", &globals::WeaponChamsInvisible);
 			ImGui::Checkbox("Enemie Weapon Chams", &globals::EnemieWeaponChams);
 			ImGui::SameLine();
 			ImGui::ColorEdit3("##Enemie Weapons Chams color", globals::EnemieWeaponChamsColor, ImGuiColorEditFlags_NoInputs);
