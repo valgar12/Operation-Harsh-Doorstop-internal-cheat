@@ -9,6 +9,8 @@ https://www.youtube.com/watch?v=y9aHbnuBUEE&t=12s&ab_channel=Valgar1
 
 1.1 Fixed crash in lobby, now it shouldnt crash when you inject in lobby or when you return to the lobby
 
+1.2 Fixed some crashes, added FOV changer, no gravity, invisible weapon, 3D boxes and added outline for skeleton ESP and 3D boxes
+
 ## --FEATURES--
 
 ### -ESP
@@ -39,7 +41,7 @@ https://www.youtube.com/watch?v=y9aHbnuBUEE&t=12s&ab_channel=Valgar1
 
 --Self weapon chams
 
---Enemies weapon chams
+--Invisible weapon
 
 --Chams with visibility check (red not visible / blue visible)
 
@@ -62,6 +64,10 @@ https://www.youtube.com/watch?v=y9aHbnuBUEE&t=12s&ab_channel=Valgar1
 --Super speed (only with bots)
 
 --Fly (only with bots)
+
+--FOV Changer
+
+--No gravity (only with bots)
 
 --No Recoil
 
